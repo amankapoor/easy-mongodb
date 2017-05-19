@@ -1,0 +1,335 @@
+db.createUser ({
+    user: "aman",
+    pwd: "1234",
+    roles: [ "readWrite", "dbAdmin"]
+});
+
+Successfully added user: { "user" : "aman", "roles" : [ "readWrite", "dbAdmin" ] }
+
+//Collections are like tables, they hold documents
+> db.createCollection('posts');
+{ "ok" : 1 }
+
+//displaying the collection
+> show collections
+posts
+
+//Inserting into collection
+> db.posts.insert({title: "Title 1", body: "body 1"});
+WriteResult({ "nInserted" : 1 })
+
+//to see the documents in a collection
+> db.posts.find();
+{ "_id" : ObjectId("591ee459b1dde6c0ec1c215f"), "title" : "Title 1", "body" : "body 1" }
+
+//inserting multiple documents in a table and adding multiple fields in one of those documents
+> db.posts.insert([{title: "Title 2", body: "body 2"},{title: "Title 3", body: "Body 3", subtitle: "Subtitle 3"}]);
+BulkWriteResult({
+        "writeErrors" : [ ],
+        "writeConcernErrors" : [ ],
+        "nInserted" : 2,
+        "nUpserted" : 0,
+        "nMatched" : 0,
+        "nModified" : 0,
+        "nRemoved" : 0,
+        "upserted" : [ ]
+})
+
+> db.posts.find();
+{ "_id" : ObjectId("591ee459b1dde6c0ec1c215f"), "title" : "Title 1", "body" : "body 1" }
+{ "_id" : ObjectId("591ee739b1dde6c0ec1c2160"), "title" : "Title 2", "body" : "body 2" }
+{ "_id" : ObjectId("591ee739b1dde6c0ec1c2161"), "title" : "Title 3", "body" : "Body 3", "subtitle" : "Subtitle 3" }
+
+//beautifying the output
+> db.posts.find().pretty();
+{
+        "_id" : ObjectId("591ee459b1dde6c0ec1c215f"),
+        "title" : "Title 1",
+        "body" : "body 1"
+}
+{
+        "_id" : ObjectId("591ee739b1dde6c0ec1c2160"),
+        "title" : "Title 2",
+        "body" : "body 2"
+}
+{
+        "_id" : ObjectId("591ee739b1dde6c0ec1c2161"),
+        "title" : "Title 3",
+        "body" : "Body 3",
+        "subtitle" : "Subtitle 3"
+}
+
+//Updating the documents - in this syntax, the previous docs are removed if we update
+> db.posts.update({title: "Title 1"}, {title: "Updated Title 1", body: "Updated Body 1"});
+WriteResult({ "nMatched" : 1, "nUpserted" : 0, "nModified" : 1 })
+
+> db.posts.find().pretty();
+{
+        "_id" : ObjectId("591ee459b1dde6c0ec1c215f"),
+        "title" : "Updated Title 1",
+        "body" : "Updated Body 1"
+}
+{
+        "_id" : ObjectId("591ee739b1dde6c0ec1c2160"),
+        "title" : "Title 2",
+        "body" : "body 2"
+}
+{
+        "_id" : ObjectId("591ee739b1dde6c0ec1c2161"),
+        "title" : "Title 3",
+        "body" : "Body 3",
+        "subtitle" : "Subtitle 3"
+}
+
+//Updating, but keeping the previous data in documents
+> db.posts.update({title: "Updated Title 1"},{$set:{subtitle: "Subtitle 1"}});
+WriteResult({ "nMatched" : 1, "nUpserted" : 0, "nModified" : 1 })
+> db.posts.find().pretty();
+{
+        "_id" : ObjectId("591ee459b1dde6c0ec1c215f"),
+        "title" : "Updated Title 1",
+        "body" : "Updated Body 1",
+        "subtitle" : "Subtitle 1"
+}
+{
+        "_id" : ObjectId("591ee739b1dde6c0ec1c2160"),
+        "title" : "Title 2",
+        "body" : "body 2"
+}
+{
+        "_id" : ObjectId("591ee739b1dde6c0ec1c2161"),
+        "title" : "Title 3",
+        "body" : "Body 3",
+        "subtitle" : "Subtitle 3"
+}
+
+//Incrementing numbers
+db.posts.update({title: "Title 3"}, {$set:{localClock: 1}}); //see this 1 is a no., not enclosed in "" to be an string, that's why it will be incremented, otherwise you will get an error
+WriteResult({ "nMatched" : 1, "nUpserted" : 0, "nModified" : 1 })
+> db.posts.find().pretty();
+{
+        "_id" : ObjectId("591ee459b1dde6c0ec1c215f"),
+        "title" : "Updated Title 1",
+        "body" : "Updated Body 1",
+        "subtitle" : "Subtitle 1"
+}
+{
+        "_id" : ObjectId("591ee739b1dde6c0ec1c2160"),
+        "title" : "Title 2",
+        "body" : "body 2"
+}
+{
+        "_id" : ObjectId("591ee739b1dde6c0ec1c2161"),
+        "title" : "Title 3",
+        "body" : "Body 3",
+        "subtitle" : "Subtitle 3",
+        "localClock" : "1"
+}
+
+> db.posts.update({title: "Title 3"}, {$inc:{localClock: 5}});
+WriteResult({ "nMatched" : 1, "nUpserted" : 0, "nModified" : 1 })
+> db.posts.find().pretty();
+{
+        "_id" : ObjectId("591ee459b1dde6c0ec1c215f"),
+        "title" : "Updated Title 1",
+        "body" : "Updated Body 1",
+        "subtitle" : "Subtitle 1"
+}
+{
+        "_id" : ObjectId("591ee739b1dde6c0ec1c2160"),
+        "title" : "Title 2",
+        "body" : "body 2"
+}
+{
+        "_id" : ObjectId("591ee739b1dde6c0ec1c2161"),
+        "title" : "Title 3",
+        "body" : "Body 3",
+        "subtitle" : "Subtitle 3",
+        "localClock" : 6
+}
+
+//unset to remove fields
+ db.posts.update({title: "Title 3"}, {$unset:{localClock: ""}});
+WriteResult({ "nMatched" : 1, "nUpserted" : 0, "nModified" : 1 })
+> db.posts.find().pretty();
+{
+        "_id" : ObjectId("591ee459b1dde6c0ec1c215f"),
+        "title" : "Updated Title 1",
+        "body" : "Updated Body 1",
+        "subtitle" : "Subtitle 1"
+}
+{
+        "_id" : ObjectId("591ee739b1dde6c0ec1c2160"),
+        "title" : "Title 2",
+        "body" : "body 2"
+}
+{
+        "_id" : ObjectId("591ee739b1dde6c0ec1c2161"),
+        "title" : "Title 3",
+        "body" : "Body 3",
+        "subtitle" : "Subtitle 3"
+}
+
+//There may arise a case when you have a lot of documents in a collection and you try to update the one that does not exists, but you want it to be 'upserted'. i.e., written into the document, so in this case, we do as follow
+//We could have done this w/o $set operator also. But, this was trying the edge case. Now, because this is possible, the normal case is by default possible.
+> db.posts.update({title: "Title 4"}, {$set:{subtitle: "Subtitle 4"}}, {upsert: true});
+WriteResult({
+        "nMatched" : 0,
+        "nUpserted" : 1,
+        "nModified" : 0,
+        "_id" : ObjectId("591eee27f6db4ba73f395f0c")
+})
+> db.posts.find().pretty();
+{
+        "_id" : ObjectId("591ee459b1dde6c0ec1c215f"),
+        "title" : "Updated Title 1",
+        "body" : "Updated Body 1",
+        "subtitle" : "Subtitle 1"
+}
+{
+        "_id" : ObjectId("591ee739b1dde6c0ec1c2160"),
+        "title" : "Title 2",
+        "body" : "body 2"
+}
+{
+        "_id" : ObjectId("591ee739b1dde6c0ec1c2161"),
+        "title" : "Title 3",
+        "body" : "Body 3",
+        "subtitle" : "Subtitle 3"
+}
+{
+        "_id" : ObjectId("591eee27f6db4ba73f395f0c"),
+        "title" : "Title 4",
+        "subtitle" : "Subtitle 4"
+}
+
+//Renaming
+> db.posts.update({title: "Title 4"}, {$rename:{subtitle: "Renamed Subtitle 4"}});
+WriteResult({ "nMatched" : 1, "nUpserted" : 0, "nModified" : 1 })
+> db.posts.find().pretty();
+{
+        "_id" : ObjectId("591ee459b1dde6c0ec1c215f"),
+        "title" : "Updated Title 1",
+        "body" : "Updated Body 1",
+        "subtitle" : "Subtitle 1"
+}
+{
+        "_id" : ObjectId("591ee739b1dde6c0ec1c2160"),
+        "title" : "Title 2",
+        "body" : "body 2"
+}
+{
+        "_id" : ObjectId("591ee739b1dde6c0ec1c2161"),
+        "title" : "Title 3",
+        "body" : "Body 3",
+        "subtitle" : "Subtitle 3"
+}
+{
+        "_id" : ObjectId("591eee27f6db4ba73f395f0c"),
+        "title" : "Title 4",
+        "Renamed Subtitle 4" : "Subtitle 4"
+}
+
+//Removing whole document
+> db.posts.remove({title: "Title 2"});
+WriteResult({ "nRemoved" : 1 })
+> db.posts.find().pretty();
+{
+        "_id" : ObjectId("591ee459b1dde6c0ec1c215f"),
+        "title" : "Updated Title 1",
+        "body" : "Updated Body 1",
+        "subtitle" : "Subtitle 1"
+}
+{
+        "_id" : ObjectId("591ee739b1dde6c0ec1c2161"),
+        "title" : "Title 3",
+        "body" : "Body 3",
+        "subtitle" : "Subtitle 3"
+}
+{
+        "_id" : ObjectId("591eee27f6db4ba73f395f0c"),
+        "title" : "Title 4",
+        "Renamed Subtitle 4" : "Subtitle 4"
+}
+
+TIP: It is always safe to work with some unique key in MongoDB, which is "_id" for us. Suppose, you were removing a title name title 3, and imagine that you had 4 documents with the same title i.e., 'title 3'; then by using the remove command above, all the 4 documents whould be removed. If we don't want this to happen, then there is a parameter that deletes just the first occurrence that it finds. Syntax is given below:
+> db.posts.remove({title: "Title 2"}, {justOne: true});
+
+//Playing with the find functions
+> db.posts.find({title: "Title 4"}).pretty();
+{
+        "_id" : ObjectId("591eee27f6db4ba73f395f0c"),
+        "title" : "Title 4",
+        "Renamed Subtitle 4" : "Subtitle 4"
+}
+
+//Using OR operator to find either this or that
+> db.posts.find({$or:[{title: "Title 4"},{title: "Title 3"}]}).pretty();
+{
+        "_id" : ObjectId("591ee739b1dde6c0ec1c2161"),
+        "title" : "Title 3",
+        "body" : "Body 3",
+        "subtitle" : "Subtitle 3"
+}
+{
+        "_id" : ObjectId("591eee27f6db4ba73f395f0c"),
+        "title" : "Title 4",
+        "Renamed Subtitle 4" : "Subtitle 4"
+}
+
+//Using < and > operators
+> db.posts.find({timeStamp:{$gt:2}}).pretty();
+{
+        "_id" : ObjectId("591ee739b1dde6c0ec1c2161"),
+        "title" : "Title 3",
+        "body" : "Body 3",
+        "subtitle" : "Subtitle 3",
+        "timeStamp" : 3
+}
+{
+        "_id" : ObjectId("591eee27f6db4ba73f395f0c"),
+        "title" : "Title 4",
+        "Renamed Subtitle 4" : "Subtitle 4",
+        "timeStamp" : 4
+}
+
+For objects storing another objects in document, to fetch the child, you need to put the key inside double quotes.
+
+//Sorting (-1 for descending and 1 ascending)
+
+db.posts.find().sort({timeStamp: -1}).pretty();
+
+//Counting total documents
+db.posts.find().count();
+3
+
+//Counting with conditions
+> db.posts.find({subtitle: "Subtitle 1"}).count();
+1
+
+//Limiting the results to certain numbers
+> db.posts.find().limit(2).pretty();
+{
+        "_id" : ObjectId("591ee459b1dde6c0ec1c215f"),
+        "title" : "Updated Title 1",
+        "body" : "Updated Body 1",
+        "subtitle" : "Subtitle 1",
+        "timeStamp" : 1
+}
+{
+        "_id" : ObjectId("591ee739b1dde6c0ec1c2161"),
+        "title" : "Title 3",
+        "body" : "Body 3",
+        "subtitle" : "Subtitle 3",
+        "timeStamp" : 3
+}
+
+TIP: Limiting to n results and sorting them in any order is possible
+db.posts.find().limit().sort().pretty();
+
+//Iterating
+db.posts.find().forEach(function(doc){print("The title is: " + doc.title)})
+The title is: Updated Title 1
+The title is: Title 3
+The title is: Title 4
+>
